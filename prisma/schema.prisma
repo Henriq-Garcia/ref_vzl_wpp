@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model numero {
+  id         Int         @id @default(autoincrement())
+  codigoloja Int
+  numero     String      @unique
+  instancia  instancia[]
+
+  @@index([codigoloja])
+}
+
+model instancia {
+  id         Int     @id @default(autoincrement())
+  codigoloja Int
+  conectado  Boolean
+  qrcode     String?
+  numero     numero  @relation(fields: [numeroid], references: [id])
+  numeroid   Int     @unique
+
+  @@index([codigoloja])
+}
+
+model mensagem {
+  id           Int            @id @default(autoincrement())
+  de           String
+  para         String
+  mensagem     String?
+  anexo        String?
+  timestamp    BigInt
+  hash         String?        @unique
+  mensagemcrua mensagemcrua[]
+  thumbnail String?
+
+  @@index([de, para])
+}
+
+model mensagemcrua {
+  id         Int      @id @default(autoincrement())
+  conteudo   Json
+  mensagem   mensagem @relation(fields: [mensagemid], references: [id])
+  mensagemid Int
+  hash       String   @unique
+}
+
+model chavedeautenticacao {
+  id                Int    @id @default(autoincrement())
+  nomechave         String @unique
+  chaveautenticacao Json
+}
