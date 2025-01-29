@@ -1,11 +1,17 @@
 import { instancia } from "@prisma/client";
-import makeWASocket, { ConnectionState, WASocket } from "@whiskeysockets/baileys";
+import makeWASocket, { assertMediaContent, ConnectionState, WAMessage, WASocket } from "@whiskeysockets/baileys";
 import pino from "pino";
 import { findNumero } from "../prisma/numero.worker";
 import { createInstancia, findInstancia, findInstanciaByNumeroId, updateInstancia } from "../prisma/instancia.worker";
 import { baileysAuthState } from "../helpers/baileysAuthState";
 import { Boom } from "@hapi/boom";
 import { toDataURL } from "qrcode";
+import { createHash } from "crypto";
+import { createMensagem, updateMessageContent } from "../prisma/mensagem.worker";
+import { extension } from "mime-types";
+import { fileToBase64 } from "../helpers/convertFileToBase64";
+import { getMessageContent } from "../helpers/getMessageContent";
+import { generateMd5Hash } from "../helpers/generateMd5Hash";
 
 export class BaileysConnector {
     private baileysConfiguration: any = {
@@ -48,6 +54,8 @@ export class BaileysConnector {
         }
         this.socket.ev.on("creds.update", this.authState.saveCreds);
         this.socket.ev.on("connection.update", this.onConnectionUpdate.bind(this))
+        this.socket.ev.on("messages.upsert", this.onMessagesUpsert.bind(this))
+        this.socket.ev.on("messaging-history.set", this.onMessagesUpsert.bind(this))
     }
 
     async onConnectionUpdate(data: Partial<ConnectionState>) {
@@ -69,7 +77,34 @@ export class BaileysConnector {
         }
         if (qr) {
             const url = await toDataURL(qr)
+            console.log(url)
             await updateInstancia(this.instancia.id, { qrcode: url })
         }
+    } 
+
+    async onMessagesUpsert(data: { messages: WAMessage[] }) {
+        if (!this.socket?.user?.id) throw new Error("Usuario não autenticado");
+        console.log("mensagem recebida")
+        const socketNum = this.socket.user.id.split("@")[0]?.split(":")[0]
+        for (const message of data.messages) {
+            const remoteJid = message.key.remoteJid?.split("@")[0]
+            const baseMensagem: any = {
+                de: message.key.fromMe ? socketNum : remoteJid,
+                para: !message.key.fromMe ? socketNum : remoteJid,
+                timestamp: new Date(message.messageTimestamp as number * 1000)
+            }
+            const msg = await createMensagem(baseMensagem)
+            if (msg) {
+                const messageContent = await getMessageContent(message, msg.id)
+                const msgHash = generateMd5Hash(JSON.stringify({...baseMensagem, ...messageContent}))
+                await updateMessageContent(msg.id, {...messageContent, hash: msgHash})
+                const dataRaw = {
+                    mensagemId: msg.id,
+                    conteudo: JSON.parse(JSON.stringify(message)),
+                    hash: generateMd5Hash(JSON.stringify(message))
+                }
+            }
+        }
     }
+    
 }
