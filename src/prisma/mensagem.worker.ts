@@ -14,6 +14,13 @@ export async function createMensagem(data: { de: string, para: string, timestamp
     }
 }
 
+export async function updateMessageContent(id: number, data: { mensagem?: string, anexo?: string, thumbnail: string, hash?: string }) {
+    return await prisma.mensagem.update({
+        where: { id },
+        data
+    })
+}
+
 export async function findMessagesLoja(codigoloja: number, conversa: string, pagina: number) {
     const numerosDaLoja = await findLojaNumeros(codigoloja)
 
