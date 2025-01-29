@@ -33,7 +33,7 @@ model mensagem {
   para         String
   mensagem     String?
   anexo        String?
-  timestamp    BigInt
+  timestamp    DateTime
   hash         String?        @unique
   mensagemcrua mensagemcrua[]
   thumbnail String?
