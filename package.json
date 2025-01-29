@@ -15,11 +15,13 @@
     "@whiskeysockets/baileys": "^6.7.9",
     "axios": "^1.7.9",
     "dotenv": "^16.4.7",
+    "mime-types": "^2.1.35",
     "pino": "^9.6.0",
     "prisma": "^6.3.0",
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
+    "@types/mime-types": "^2.1.4",
     "@types/qrcode": "^1.5.5",
     "tsx": "^4.19.2"
   }
