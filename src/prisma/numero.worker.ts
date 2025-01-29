@@ -1,4 +1,4 @@
-import { findInstanciaByNumeroId } from "./instancia";
+import { findInstanciaByNumeroId } from "./instancia.worker";
 
 export async function createNumero(data: { codigoloja: number, numero: string }) {
     try {
