@@ -1,6 +1,6 @@
 import { findInstanciaByNumeroId } from "./instancia.worker";
 
-export async function createNumero(data: { codigoloja: number, numero: string }) {
+export async function createNumero(data: { codigoloja: number, numero: string, alias?: string }) {
     try {
         const result = await prisma.numero.create({
             data
