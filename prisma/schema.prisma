@@ -11,7 +11,7 @@ model numero {
   id         Int         @id @default(autoincrement())
   codigoloja Int
   numero     String      @unique
-  alias      String
+  alias      String?
   instancia  instancia[]
 
   @@index([codigoloja])
