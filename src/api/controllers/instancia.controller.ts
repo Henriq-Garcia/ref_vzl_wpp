@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createNumero, findNumero } from "../../prisma/numero.worker";
+import { createNumero, findLojaNumeros, findNumero } from "../../prisma/numero.worker";
 import { BaileysConnector } from "../../classes/baileysConnector";
 import { findInstancia, findInstanciaByNumeroId } from "../../prisma/instancia.worker";
 
@@ -31,9 +31,9 @@ export async function createInstanciaController(req: Request, res: Response): Pr
     }
 }
 
-// TODO: getInstanciaQRCodeController() => input:numero; output: QrCode
+// TODO: getInstanciaQRCodeController() => input:numero; output: QrCode // DONE
 export async function getInstanciaQRCodeController(req: Request, res: Response): Promise<any> {
-    let { numero  } = req.query;
+    let { numero } = req.query;
     if (!numero) {
         return res.status(400).send({
             error: true,
@@ -52,7 +52,6 @@ export async function getInstanciaQRCodeController(req: Request, res: Response):
             qrcode: instancia.qrcode
         })
     } catch (error) {
-        console.log(error)
         res.status(500).send({
             error: true,
             message: "Erro no servidor durante a busca do QrCode"
@@ -61,4 +60,37 @@ export async function getInstanciaQRCodeController(req: Request, res: Response):
 }
 
 // TODO: getLojasNumeroController() => input: codigoloja; output: todos os numeros dela e o status de suas instancias
+export async function getLojasNumeroController(req: Request, res: Response): Promise<any> {
+    let { codigoloja }: any = req.query;
+    if (!codigoloja) {
+        return res.status(400).send({
+            error: true,
+            message: "Informe um codigo de loja"
+        })
+    }
+    codigoloja = Number(codigoloja)
+    if (!(typeof codigoloja === "number")) {
+        return res.status(400).send({
+            error: true,
+            message: "O codigo da loja deve ser um numero"
+        })
+    }
+    try {
+        const numeros = await findLojaNumeros(codigoloja)
+        if (numeros.length === 0) {
+            res.status(204).send()
+        }
+        return res.status(200).send({
+            error: false,
+            message: "Numeros encontrados",
+            numeros
+        })
+    } catch (error) {
+        res.status(500).send({
+            error: true,
+            message: "Erro no servidor durante a busca dos numeros"
+        })
+    }
+
+}
 // TODO: setNumeroAliasController() => input: codigoloja, numero;
