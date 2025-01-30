@@ -30,4 +30,6 @@ export async function createInstanciaController(req: Request, res: Response): Pr
     }
 }
 
-// teste
+// TODO: getInstanciaQRCodeController() => input:numero; output: QrCode
+// TODO: getLojasNumeroController() => input: codigoloja; output: todos os numeros dela e o status de suas instancias
+// TODO: setNumeroAliasController() => input: codigoloja, numero;
