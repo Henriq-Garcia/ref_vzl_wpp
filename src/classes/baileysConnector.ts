@@ -20,6 +20,7 @@ export class BaileysConnector {
     instancia?: instancia|null;
     authState?: { state: any, saveCreds: () => Promise<any> };
     socket?: WASocket;
+    alias?: string;
     numero: string;
 
     constructor (numero: string) {
@@ -40,6 +41,7 @@ export class BaileysConnector {
             const instancia = await findInstanciaByNumeroId(num.id);
             this.instancia = instancia;
         }
+        this.alias = num.alias;
         this.authState = await baileysAuthState(this.numero);
         this.baileysConfiguration.auth = this.authState.state;
         this.socket = makeWASocket(this.baileysConfiguration);
@@ -96,10 +98,9 @@ export class BaileysConnector {
 
 
     async onMessagesUpsert(data: { messages: WAMessage[] }) {
-        if (!this.socket?.user?.id) throw new Error("Usuário não autenticado");
+        if (!this.socket?.user?.id || !this.alias) throw new Error("Usuário não autenticado");
         
-        console.log("Mensagem recebida");
-        const socketNum = this.socket.user.id.split("@")[0]?.split(":")[0];
+        const socketNum = this.alias ? this.alias : this.socket.user.id.split("@")[0]?.split(":")[0];
         
         for (const message of data.messages) {
             try {
