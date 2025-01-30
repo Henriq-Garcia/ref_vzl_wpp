@@ -1,7 +1,11 @@
 import "./config/config"
-import { BaileysConnector } from "./classes/baileysConnector"
+import express from "express"
+import { configServer } from "./api/config/configExpress"
 
-(async () => {
-    const baileys = new BaileysConnector("17982107650")
-    await baileys.init(false)
-})()
+const app = express()
+
+configServer(app);
+
+app.listen(5555, () => {
+    console.log("servidor iniciado na porta 5555")
+})
