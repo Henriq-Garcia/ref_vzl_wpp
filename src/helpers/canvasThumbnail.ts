@@ -1,73 +1,98 @@
-import { createCanvas, loadImage } from "canvas";
+import { createCanvas } from "canvas";
 import sharp from "sharp";
-import ffmpeg from "fluent-ffmpeg"
-import { getDocument } from "pdfjs-dist"
+import ffmpeg from "fluent-ffmpeg";
+import { getDocument } from "pdfjs-dist";
 import { createReadStream } from "streamifier";
 
-ffmpeg.setFfmpegPath(ffmpegPath)
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 export async function thumbnailBase64(fileBase64: string, type: string, mimeType?: string): Promise<string> {
-    const tamanho = 250
-    const fileBuffer = Buffer.from(fileBase64, "base64")
+    const tamanho = 250;
+
+    // Verificação de entrada
+    if (!fileBase64 || fileBase64.length === 0) {
+        throw new Error("O arquivo Base64 está vazio ou inválido.");
+    }
+
+    const fileBuffer = Buffer.from(fileBase64, "base64");
+    if (fileBuffer.length === 0) {
+        throw new Error("Erro ao converter Base64 para Buffer: O Buffer está vazio.");
+    }
+
     switch (type) {
         case "image":
             const thumbnailBuffer = await sharp(fileBuffer)
-                .resize({width: tamanho})
+                .resize({ width: tamanho })
                 .jpeg()
-                .toBuffer()
-            return thumbnailBuffer.toString("base64")
+                .toBuffer();
+            return thumbnailBuffer.toString("base64");
+
         case "video":
             return new Promise((resolve, reject) => {
-                // cria uma stream de leitura
-                const videoStream = createReadStream(fileBuffer)
-                let imageBuffer = []
+                const videoStream = createReadStream(Buffer.from(fileBase64, "base64"));
+                let imageBuffer: Buffer[] = [];
 
-                // usa o ffmpeg para selecionar um frame e transformar em imagem
                 ffmpeg(videoStream)
                     .inputFormat("mp4")
-                    .seekInput(0)
+                    .outputOptions("-vcodec", "png")
                     .frames(1)
                     .format("image2")
                     .pipe()
+                    .on("start", (commandLine) => {
+                        console.log(`Comando ffmpeg: ${commandLine}`)
+                    })
+                    .on("error", (err, stdout, stderr) => {
+                        console.error('Erro no ffmpeg:', err);
+                        console.error('stdout:', stdout);
+                        console.error('stderr:', stderr);
+                        reject(err);
+                    })
                     .on("data", (chunk) => imageBuffer.push(chunk))
                     .on("end", async () => {
                         try {
-                            const frameBuffer = Buffer.concat(imageBuffer)
+                            const frameBuffer = Buffer.concat(imageBuffer);
+                            if (frameBuffer.length === 0) {
+                                throw new Error("FFmpeg não conseguiu capturar um frame do vídeo.");
+                            }
 
                             const thumbnailBuffer = await sharp(frameBuffer)
-                                .resize({width: tamanho})
+                                .resize({ width: tamanho })
                                 .jpeg()
-                                .toBuffer()
+                                .toBuffer();
 
-                            resolve(thumbnailBuffer.toString("base64"))
+                            resolve(thumbnailBuffer.toString("base64"));
                         } catch (error) {
-                            reject(error)
+                            reject(error);
                         }
                     })
-            })
+                    .on("error", (error) => {
+                        console.error("Erro no ffmpeg:", error);
+                        reject(new Error("Erro ao processar o vídeo com ffmpeg."));
+                    });
+            });
+
         case "document":
-            switch (mimeType) {
-                case "application/pdf":
-                    // carrega o pdf e seleciona a primeira pagina
-                    const pdf = await getDocument({data: fileBuffer}).promise
-                    const page = await pdf.getPage(1)
+            if (mimeType === "application/pdf") {
+                const pdf = await getDocument({ data: fileBuffer }).promise;
+                const page = await pdf.getPage(1);
+                const scale = 0.5;
+                const viewport = page.getViewport({ scale });
 
-                    // escala da imagem e qualidade
-                    const scale = 1.5
-                    const viewport = page.getViewport({scale})
+                const canvas = createCanvas(viewport.width, viewport.height);
+                const ctx = canvas.getContext("2d") as unknown as CanvasRenderingContext2D;
 
-                    const canvas = createCanvas(viewport.width, viewport.height)
-                    const ctx = canvas.getContext("2d") as unknown as CanvasRenderingContext2D
+                await page.render({ canvasContext: ctx, viewport }).promise;
+                const imageBuffer = canvas.toBuffer("image/jpeg");
 
-                    await page.render({canvasContext: ctx, viewport}).promise
-                    const imageBuffer = canvas.toBuffer("image/jpeg")
+                const thumbnailBuffer = await sharp(imageBuffer)
+                    .resize({ width: tamanho })
+                    .jpeg()
+                    .toBuffer();
 
-                    const thumbnailBuffer = await sharp(imageBuffer)
-                        .resize({width: tamanho})
-                        .jpeg()
-                        .toBuffer()
-
-                    return thumbnailBuffer.toString("base64")
+                return thumbnailBuffer.toString("base64");
             }
+            throw new Error("Tipo de documento não suportado.");
     }
+
+    throw new Error("Tipo de arquivo não suportado.");
 }

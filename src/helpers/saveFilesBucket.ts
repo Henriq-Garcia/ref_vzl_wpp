@@ -33,7 +33,7 @@ export async function postFileToBucket(fileName: string, fileBase64: string, fol
         });
         return { error: false, content: response.data };
     } catch (error: any) {
-        if (error.response && error.response.status === 401) {
+        if (error.response && error.response.status === 401 || error instanceof ReferenceError) {
             console.warn("Token expirado, autenticando novamente...");
             await authenticateCobCo();
 
