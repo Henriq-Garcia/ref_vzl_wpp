@@ -11,6 +11,7 @@ model numero {
   id         Int         @id @default(autoincrement())
   codigoloja Int
   numero     String      @unique
+  alias      String
   instancia  instancia[]
 
   @@index([codigoloja])
@@ -36,7 +37,7 @@ model mensagem {
   timestamp    DateTime
   hash         String?        @unique
   mensagemcrua mensagemcrua[]
-  thumbnail String?
+  thumbnail    String?
 
   @@index([de, para])
 }
