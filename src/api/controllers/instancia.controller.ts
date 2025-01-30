@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { createNumero, findNumero } from "../../prisma/numero.worker";
 import { BaileysConnector } from "../../classes/baileysConnector";
+import { findInstancia, findInstanciaByNumeroId } from "../../prisma/instancia.worker";
 
 export async function createInstanciaController(req: Request, res: Response): Promise<any> {
     const { numero, codigoloja, alias } = req.body
@@ -23,7 +24,7 @@ export async function createInstanciaController(req: Request, res: Response): Pr
             message: "Instacia iniciada"
         })
     } catch (error) {
-        res.status(500).send({
+        return res.status(500).send({
             error: true,
             message: "Erro no servidor durante criação da Instancia"
         })
@@ -31,5 +32,33 @@ export async function createInstanciaController(req: Request, res: Response): Pr
 }
 
 // TODO: getInstanciaQRCodeController() => input:numero; output: QrCode
+export async function getInstanciaQRCodeController(req: Request, res: Response): Promise<any> {
+    let { numero  } = req.query;
+    if (!numero) {
+        return res.status(400).send({
+            error: true,
+            message: "Informe um numero"
+        })
+    }
+    try {
+        const num = await findNumero(String(numero))
+        let instancia = await findInstanciaByNumeroId(num.id)
+        while (!instancia.qrcode) {
+            instancia = await findInstanciaByNumeroId(num.id)
+        }
+        return res.status(200).send({
+            error: false,
+            message: "QrCode encontrado",
+            qrcode: instancia.qrcode
+        })
+    } catch (error) {
+        console.log(error)
+        res.status(500).send({
+            error: true,
+            message: "Erro no servidor durante a busca do QrCode"
+        })
+    }
+}
+
 // TODO: getLojasNumeroController() => input: codigoloja; output: todos os numeros dela e o status de suas instancias
 // TODO: setNumeroAliasController() => input: codigoloja, numero;
