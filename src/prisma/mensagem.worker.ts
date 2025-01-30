@@ -15,9 +15,19 @@ export async function createMensagem(data: { de: string, para: string, timestamp
 }
 
 export async function updateMessageContent(id: number, data: { mensagem?: string, anexo?: string, thumbnail: string, hash?: string }) {
-    return await prisma.mensagem.update({
-        where: { id },
-        data
+    try {
+        return await prisma.mensagem.update({
+            where: { id },
+            data
+        })
+    } catch (error) {
+        return undefined
+    }
+}
+
+export async function deleteMessage(id: number) {
+    return await prisma.mensagem.delete({
+        where: { id }
     })
 }
 
