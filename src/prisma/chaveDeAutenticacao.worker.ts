@@ -39,3 +39,11 @@ export async function removeChaveDeAutenticacao(nomechave: string) {
         }
     });
 };
+
+export async function removeChavesDeAutenticacaoDaInstancia(numero: string) {
+    return await prisma.chavedeautenticacao.deleteMany({
+        where: {
+            nomechave: {contains: numero}
+        }
+    })
+}
