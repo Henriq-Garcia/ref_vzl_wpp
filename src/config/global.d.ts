@@ -7,4 +7,8 @@ declare global {
     var prisma: PrismaClient;
     var cobcoToken: string;
     var ffmpegPath: string;
+    var cobcoUser: string;
+    var cobcoPass: string;
+    var cobcoProjeto: string;
+    var cobcoCliente: string;
 }
