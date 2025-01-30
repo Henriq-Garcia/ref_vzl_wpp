@@ -4,10 +4,11 @@ import ffmpeg from "fluent-ffmpeg"
 import { getDocument } from "pdfjs-dist"
 import { createReadStream } from "streamifier";
 
+ffmpeg.setFfmpegPath(ffmpegPath)
 type document = "image" | "video" | "document"
 
 export async function thumbnailBase64(fileBase64: string, type: document, mimeType?: string): Promise<string> {
-    const tamanho = 100
+    const tamanho = 250
     const fileBuffer = Buffer.from(fileBase64, "base64")
     switch (type) {
         case "image":
@@ -25,7 +26,7 @@ export async function thumbnailBase64(fileBase64: string, type: document, mimeTy
                 // usa o ffmpeg para selecionar um frame e transformar em imagem
                 ffmpeg(videoStream)
                     .inputFormat("mp4")
-                    .seekInput(1)
+                    .seekInput(0)
                     .frames(1)
                     .format("image2")
                     .pipe()
@@ -41,7 +42,7 @@ export async function thumbnailBase64(fileBase64: string, type: document, mimeTy
 
                             resolve(thumbnailBuffer.toString("base64"))
                         } catch (error) {
-                            reject(undefined)
+                            reject(error)
                         }
                     })
             })
@@ -70,6 +71,4 @@ export async function thumbnailBase64(fileBase64: string, type: document, mimeTy
                     return thumbnailBuffer.toString("base64")
             }
     }
-    
-
 }
