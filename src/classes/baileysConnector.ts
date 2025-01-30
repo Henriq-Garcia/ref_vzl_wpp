@@ -6,10 +6,7 @@ import { createInstancia, findInstancia, findInstanciaByNumeroId, updateInstanci
 import { baileysAuthState } from "../helpers/baileysAuthState";
 import { Boom } from "@hapi/boom";
 import { toDataURL } from "qrcode";
-import { createHash } from "crypto";
-import { createMensagem, updateMessageContent } from "../prisma/mensagem.worker";
-import { extension } from "mime-types";
-import { fileToBase64 } from "../helpers/convertFileToBase64";
+import { createMensagem, deleteMessage, updateMessageContent } from "../prisma/mensagem.worker";
 import { getMessageContent } from "../helpers/getMessageContent";
 import { generateMd5Hash } from "../helpers/generateMd5Hash";
 
@@ -103,6 +100,7 @@ export class BaileysConnector {
                     conteudo: JSON.parse(JSON.stringify(message)),
                     hash: generateMd5Hash(JSON.stringify(message))
                 }
+                
             }
         }
     }
