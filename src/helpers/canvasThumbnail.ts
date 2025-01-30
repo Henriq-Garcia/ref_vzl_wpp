@@ -5,9 +5,8 @@ import { getDocument } from "pdfjs-dist"
 import { createReadStream } from "streamifier";
 
 ffmpeg.setFfmpegPath(ffmpegPath)
-type document = "image" | "video" | "document"
 
-export async function thumbnailBase64(fileBase64: string, type: document, mimeType?: string): Promise<string> {
+export async function thumbnailBase64(fileBase64: string, type: string, mimeType?: string): Promise<string> {
     const tamanho = 250
     const fileBuffer = Buffer.from(fileBase64, "base64")
     switch (type) {

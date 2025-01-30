@@ -1,7 +1,7 @@
 import { DownloadableMessage, downloadContentFromMessage } from "@whiskeysockets/baileys"
 import internal from "stream"
 
-export async function fileToBase64(content: DownloadableMessage, messageType: "image" | "video" | "document" | "audio" | "sticker" | "thumbnail-document" | "thumbnail-image" | "thumbnail-video") {
+export async function fileToBase64(content: DownloadableMessage, messageType: any): Promise<string>{
     const media = await downloadContentFromMessage(content, messageType)
     return new Promise((resolve, reject) => {
         if (!media) reject(null);
