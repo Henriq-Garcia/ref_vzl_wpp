@@ -20,20 +20,21 @@ export async function getMessageContent(message: WAMessage, messageId: number): 
         const base64Anexo = await fileToBase64(content, messageType.replace("Message", ""));
         let base64Thumbnail, thumbnailUrl, anexoUrl;
         
-        if (["imageMessage", "videoMessage", "documentMessage"].includes(messageType)) {
-            base64Thumbnail = await thumbnailBase64(base64Anexo, messageType.replace("Message", ""), content.mimetype);
-            thumbnailUrl = (await postFileToBucket(`thumbnail-${messageId}`, base64Thumbnail, `whatsapp/thumbnails/${messageId}`))["content"]["link_arquivo"];
+        if (["imageMessage", "videoMessage", "documentMessage", "stickerMessage"].includes(messageType)) {
+            if (["imageMessage", "videoMessage", "documentMessage"].includes(messageType)) {
+                base64Thumbnail = await thumbnailBase64(base64Anexo, messageType.replace("Message", ""), content.mimetype);
+                thumbnailUrl = (await postFileToBucket(`thumbnail-${messageId}`, base64Thumbnail, `whatsapp/thumbnails/${messageId}`))["content"]["link_arquivo"];
+            }
+            
+            anexoUrl = (await postFileToBucket(`${messageId}`, base64Anexo, `whatsapp/anexos/${messageId}`))["content"]["link_arquivo"];
+            
+            return {
+                mensagem: messageContent[messageType]?.caption,
+                anexo: anexoUrl,
+                ...(thumbnailUrl && { thumbnail: thumbnailUrl })
+            };
         }
-        
-        anexoUrl = (await postFileToBucket(`${messageId}`, base64Anexo, `whatsapp/anexos/${messageId}`))["content"]["link_arquivo"];
-        
-        return {
-            mensagem: messageContent[messageType]?.caption,
-            anexo: anexoUrl,
-            ...(thumbnailUrl && { thumbnail: thumbnailUrl })
-        };
     } catch (error) {
-        console.error("Erro ao processar a mensagem:", error);
         return null;
     }
 }
