@@ -130,7 +130,7 @@ export class BaileysConnector {
                 };
                 
             } catch (error) {
-                console.error("Erro ao processar mensagem:", error);
+                continue
             }
         }
     }
