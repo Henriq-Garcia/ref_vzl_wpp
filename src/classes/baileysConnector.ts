@@ -9,6 +9,7 @@ import { toDataURL } from "qrcode";
 import { createMensagem, deleteMessage, updateMessageContent } from "../prisma/mensagem.worker";
 import { getMessageContent } from "../helpers/getMessageContent";
 import { generateMd5Hash } from "../helpers/generateMd5Hash";
+import { removeChavesDeAutenticacaoDaInstancia } from "../prisma/chaveDeAutenticacao.worker";
 
 export class BaileysConnector {
     private baileysConfiguration: any = {
@@ -56,53 +57,80 @@ export class BaileysConnector {
     }
 
     async onConnectionUpdate(data: Partial<ConnectionState>) {
-        if (!this.instancia) throw new Error("Instancia não iniciada")
-        const { qr, lastDisconnect, connection } = data
-        if (connection === "close") {
-            if ((lastDisconnect?.error as Boom).output.statusCode === 401) {
-                await this.socket?.ws.close()
-                await updateInstancia(this.instancia.id, { conectado: false })
-            };
-            this.init(false)
-        } else if (connection === "open") {
-            await updateInstancia(this.instancia.id, { conectado: true })
-            if (this.socket?.user?.id) {
-                if (!this.socket.user.id.includes(this.numero)) {
-                    await this.socket.logout()
-                }
+    if (!this.instancia) throw new Error("Instância não iniciada");
+
+    try {
+        const { qr, lastDisconnect, connection } = data;
+
+        if (connection === "close" && lastDisconnect?.error) {
+            const statusCode = (lastDisconnect.error as Boom)?.output?.statusCode;
+            
+            if (statusCode === 401) {
+                await this.socket?.ws.close();
+                await updateInstancia(this.instancia.id, { conectado: false });
+                await removeChavesDeAutenticacaoDaInstancia(this.numero)
+                return;
+            }
+
+            await this.init(false);
+        }
+
+        if (connection === "open") {
+            await updateInstancia(this.instancia.id, { conectado: true });
+
+            const userId = this.socket?.user?.id;
+            if (userId && !userId.includes(this.numero)) {
+                await this.socket.logout();
             }
         }
+
         if (qr) {
-            const url = await toDataURL(qr)
-            console.log(url)
-            await updateInstancia(this.instancia.id, { qrcode: url })
+            const url = await toDataURL(qr);
+            console.log("QR Code gerado:", url);
+            await updateInstancia(this.instancia.id, { qrcode: url });
         }
-    } 
+    } catch (error) {
+        console.error("Erro ao atualizar conexão:", error);
+    }
+}
+
 
     async onMessagesUpsert(data: { messages: WAMessage[] }) {
-        if (!this.socket?.user?.id) throw new Error("Usuario não autenticado");
-        console.log("mensagem recebida")
-        const socketNum = this.socket.user.id.split("@")[0]?.split(":")[0]
+        if (!this.socket?.user?.id) throw new Error("Usuário não autenticado");
+        
+        console.log("Mensagem recebida");
+        const socketNum = this.socket.user.id.split("@")[0]?.split(":")[0];
+        
         for (const message of data.messages) {
-            const remoteJid = message.key.remoteJid?.split("@")[0]
-            const baseMensagem: any = {
-                de: message.key.fromMe ? socketNum : remoteJid,
-                para: !message.key.fromMe ? socketNum : remoteJid,
-                timestamp: new Date(message.messageTimestamp as number * 1000)
-            }
-            const msg = await createMensagem(baseMensagem)
-            if (msg) {
-                const messageContent = await getMessageContent(message, msg.id)
-                const msgHash = generateMd5Hash(JSON.stringify({...baseMensagem, ...messageContent}))
-                await updateMessageContent(msg.id, {...messageContent, hash: msgHash})
-                const dataRaw = {
-                    mensagemId: msg.id,
-                    conteudo: JSON.parse(JSON.stringify(message)),
-                    hash: generateMd5Hash(JSON.stringify(message))
+            try {
+                const remoteJid = message.key.remoteJid?.split("@")[0];
+                const baseMensagem: any = {
+                    de: message.key.fromMe ? socketNum : remoteJid,
+                    para: !message.key.fromMe ? socketNum : remoteJid,
+                    timestamp: new Date((message.messageTimestamp as number) * 1000)
+                };
+                
+                const msg = await createMensagem(baseMensagem);
+                if (!msg) continue;
+                
+                const messageContent = await getMessageContent(message, msg.id);
+                if (!messageContent) {
+                    await deleteMessage(msg.id);
+                    continue;
                 }
                 
+                const msgHash = generateMd5Hash(JSON.stringify({ ...baseMensagem, ...messageContent }));
+                await updateMessageContent(msg.id, { ...messageContent, hash: msgHash });
+                
+                const dataRaw = {
+                    mensagemId: msg.id,
+                    conteudo: message,
+                    hash: generateMd5Hash(JSON.stringify(message))
+                };
+                
+            } catch (error) {
+                console.error("Erro ao processar mensagem:", error);
             }
         }
     }
-    
 }
