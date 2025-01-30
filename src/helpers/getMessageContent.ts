@@ -25,37 +25,36 @@ export async function getMessageContent(message: WAMessage, messageId: number): 
                 content = assertMediaContent(messageContent)
                 fileExtension = extension(content.mimetype)
                 base64Anexo = await fileToBase64(content, "image")
-                base64Thumbnail = await fileToBase64(content, "thumbnail-image")
-                return { mensagem: messageContent.imageMessage.caption, anexo: base64Anexo, thumbnail: base64Thumbnail }
+                // base64Thumbnail = await fileToBase64(content, "thumbnail-image")
+                return { mensagem: messageContent.imageMessage.caption, anexo: `data:${content.mimetype};base64,${base64Anexo}`,  }
 
             case "videoMessage":
                 content = assertMediaContent(messageContent)
                 fileExtension = extension(content.mimetype)
                 base64Anexo = await fileToBase64(content, "video")
-                base64Thumbnail = await fileToBase64(content, "thumbnail-video")
-                return { mensagem: messageContent.videoMessage.caption, anexo: base64Anexo, thumbnail: base64Thumbnail }
+                return { mensagem: messageContent.videoMessage.caption, anexo: `data:${content.mimetype};base64,${base64Anexo}`,  }
 
             case "stickerMessage":
                 content = assertMediaContent(messageContent)
                 fileExtension = extension(content.mimetype)
                 base64Anexo = await fileToBase64(content, "sticker")
-                base64Thumbnail = await fileToBase64(content, "thumbnail-image")
-                return { anexo: base64Anexo, thumbnail: base64Thumbnail}
+                return { anexo: `data:${content.mimetype};base64,${base64Anexo}`}
 
             case "documentMessage":
                 content = assertMediaContent(messageContent)
                 fileExtension = extension(content.mimetype)
                 base64Anexo = await fileToBase64(content, "document")
-                base64Thumbnail = await fileToBase64(content, "thumbnail-document")
-                return { mensagem: messageContent.documentMessage.caption, anexo: base64Anexo, thumbnail: base64Thumbnail }
+                // base64Thumbnail = await fileToBase64(content, "thumbnail-document")
+                return { mensagem: messageContent.documentMessage.caption, anexo: `data:${content.mimetype};base64,${base64Anexo}`,  }
             
             case "audioMessage":
                 content = assertMediaContent(messageContent)
                 fileExtension = extension(content.mimetype)
                 base64Anexo = await fileToBase64(content, "audio")
-                return { anexo: base64Anexo }
+                return { anexo: `data:${content.mimetype};base64,${base64Anexo}` }
         }
     } catch (error) {
+        console.error(error)
         return
     }    
 }
