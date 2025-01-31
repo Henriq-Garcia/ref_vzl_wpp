@@ -21,8 +21,7 @@ export async function getMessageContent(message: WAMessage, messageId: number): 
             const base64Anexo = await fileToBase64(content, messageType.replace("Message", ""));
             let base64Thumbnail, thumbnailUrl, anexoUrl;
             if (["imageMessage", "videoMessage", "documentMessage"].includes(messageType)) {
-                base64Thumbnail = await thumbnailBase64(base64Anexo, messageType.replace("Message", ""), content.mimetype);
-                thumbnailUrl = (await postFileToBucket(`thumbnail-${messageId}.jpeg`, base64Thumbnail, `whatsapp/thumbnails/${messageId}`))["content"]["link_arquivo"];
+                thumbnailUrl = await thumbnailBase64(base64Anexo, messageType.replace("Message", ""), content.mimetype);
             }
             
             anexoUrl = (await postFileToBucket(`${messageId}.${fileExtension}`, base64Anexo, `whatsapp/anexos/${messageId}`))["content"]["link_arquivo"];

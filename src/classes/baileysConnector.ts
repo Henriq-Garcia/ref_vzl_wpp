@@ -72,9 +72,12 @@ export class BaileysConnector {
                 await this.socket?.ws.close();
                 await updateInstancia(this.instancia.id, { conectado: false });
                 await removeChavesDeAutenticacaoDaInstancia(this.numero)
-                return;
+                
             }
-
+            if (statusCode === 408) {
+                await updateInstancia(this.instancia.id, { conectado: false });
+                await removeChavesDeAutenticacaoDaInstancia(this.numero)
+            }
             await this.init(false);
         }
 
@@ -98,7 +101,7 @@ export class BaileysConnector {
 
 
     async onMessagesUpsert(data: { messages: WAMessage[] }) {
-        if (!this.socket?.user?.id || !this.alias) throw new Error("Usuário não autenticado");
+        if (!this.socket?.user?.id || !this.alias) return this.init(false);
         
         const socketNum = this.socket.user.id.split("@")[0]?.split(":")[0];
         
@@ -108,7 +111,7 @@ export class BaileysConnector {
                 const baseMensagem: any = {
                     de: message.key.fromMe ? socketNum : remoteJid,
                     para: !message.key.fromMe ? socketNum : remoteJid,
-                    timestamp: new Date((message.messageTimestamp as number) * 1000)
+                    data: new Date((message.messageTimestamp as number) * 1000)
                 };
                 
                 const msg = await createMensagem(baseMensagem);

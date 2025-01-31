@@ -4,8 +4,6 @@ import ffmpeg from "fluent-ffmpeg";
 import { getDocument } from "pdfjs-dist";
 import { createReadStream } from "streamifier";
 
-ffmpeg.setFfmpegPath(ffmpegPath);
-
 export async function thumbnailBase64(fileBase64: string, type: string, mimeType?: string): Promise<string> {
     const tamanho = 250;
 
@@ -25,7 +23,7 @@ export async function thumbnailBase64(fileBase64: string, type: string, mimeType
                 .resize({ width: tamanho })
                 .jpeg()
                 .toBuffer();
-            return thumbnailBuffer.toString("base64");
+            return `data:image/png;base64,${thumbnailBuffer.toString("base64")}`;
 
         case "video":
             return new Promise((resolve, reject) => {
@@ -56,7 +54,7 @@ export async function thumbnailBase64(fileBase64: string, type: string, mimeType
                                 .jpeg()
                                 .toBuffer();
 
-                            resolve(thumbnailBuffer.toString("base64"));
+                            resolve(`data:image/png;base64,${thumbnailBuffer.toString("base64")}`);
                         } catch (error) {
                             reject(error);
                         }
@@ -84,7 +82,7 @@ export async function thumbnailBase64(fileBase64: string, type: string, mimeType
                     .jpeg()
                     .toBuffer();
 
-                return thumbnailBuffer.toString("base64");
+                return `data:image/png;base64,${thumbnailBuffer.toString("base64")}`;
             }
             throw new Error("Tipo de documento não suportado.");
     }

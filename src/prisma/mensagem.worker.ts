@@ -3,7 +3,7 @@ import { findLojaNumeros } from "./numero.worker"
 import { mensagem, Prisma } from "@prisma/client"
 import { findMensagemCrua } from "./mensagemCrua.worker"
 
-export async function createMensagem(data: { de: string, para: string, timestamp: Date }) {
+export async function createMensagem(data: { de: string, para: string, data: Date }) {
     try {
         const result = await prisma.mensagem.create({
             data
@@ -44,7 +44,7 @@ export async function findMessagesLoja(codigoloja: number, conversa: string, pag
     let messagesReturn: any[] = []
     for (const numero of numerosDaLoja) {
         let result = await prisma.mensagem.findMany({
-            orderBy: { timestamp: "desc" },
+            orderBy: { data: "desc" },
             where: {
                 OR: [
                     { de: { contains: numero.numero }, para: { contains: conversa } },
