@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createNumero, findLojaNumeros, findNumero } from "../../prisma/numero.worker";
+import { createNumero, findLojaNumeros, findNumero, updateNumero } from "../../prisma/numero.worker";
 import { BaileysConnector } from "../../classes/baileysConnector";
 import { findInstancia, findInstanciaByNumeroId } from "../../prisma/instancia.worker";
 
@@ -59,7 +59,7 @@ export async function getInstanciaQRCodeController(req: Request, res: Response):
     }
 }
 
-// TODO: getLojasNumeroController() => input: codigoloja; output: todos os numeros dela e o status de suas instancias
+// TODO: getLojasNumeroController() => input: codigoloja; output: todos os numeros da loja e o status de suas instancias // DONE
 export async function getLojasNumeroController(req: Request, res: Response): Promise<any> {
     let { codigoloja }: any = req.query;
     if (!codigoloja) {
@@ -93,4 +93,26 @@ export async function getLojasNumeroController(req: Request, res: Response): Pro
     }
 
 }
-// TODO: setNumeroAliasController() => input: codigoloja, numero;
+
+// TODO: setNumeroAliasController() => input: numero, alias; // DONE
+export async function setNumeroAliasController(req: Request, res: Response): Promise<any> {
+    let { numero, alias }: any = req.body
+    if (!numero && alias) {
+        return res.status(400).send({
+            error: true,
+            message: "Parametros invalidos"
+        })
+    }
+    try {
+        await updateNumero(numero, alias)
+        return res.status(200).send({
+            error: false,
+            message: "Alias criado"
+        })
+    } catch (error) {
+        return res.status(500).send({
+            error: true,
+            message: "Erro no servidor durante a criação do alias"
+        })
+    }
+}
