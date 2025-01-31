@@ -3,7 +3,7 @@ import { createInstanciaController, getInstanciaQRCodeController, getLojasNumero
 
 export const instanciaRouter = Router()
 
-instanciaRouter.post("/create", createInstanciaController)
+instanciaRouter.post("/", createInstanciaController)
 instanciaRouter.get("/qrcode", getInstanciaQRCodeController)
 instanciaRouter.get("/", getLojasNumeroController)
 instanciaRouter.patch("/", setNumeroAliasController)
