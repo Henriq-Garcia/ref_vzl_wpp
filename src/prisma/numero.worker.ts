@@ -39,3 +39,10 @@ export async function findLojaNumeros(codigoloja: number) {
     })))
     return formatedResult
 }
+
+export async function updateNumero(numero: string, alias: string) {
+    return await prisma.numero.update({
+        where: { numero },
+        data: { alias }
+    })
+}
