@@ -78,7 +78,7 @@ export async function getLojasNumeroController(req: Request, res: Response): Pro
     try {
         const numeros = await findLojaNumeros(codigoloja)
         if (numeros.length === 0) {
-            res.status(204).send()
+            return res.status(204).send()
         }
         return res.status(200).send({
             error: false,
