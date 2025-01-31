@@ -14,7 +14,7 @@ export async function createMensagem(data: { de: string, para: string, timestamp
     }
 }
 
-export async function updateMessageContent(id: number, data: { mensagem?: string, anexo?: string, thumbnail: string, hash?: string }) {
+export async function updateMessageContent(id: number, data: { mensagem?: string, anexo?: string, thumbnail?: string, hash?: string }) {
     try {
         return await prisma.mensagem.update({
             where: { id },
@@ -42,9 +42,8 @@ export async function findMessagesLoja(codigoloja: number, conversa: string, pag
     const offset = (pagina - 1) * limit
 
     let messagesReturn: any[] = []
-
-    const queries = numerosDaLoja.map(numero => {
-        return prisma.mensagem.findMany({
+    for (const numero of numerosDaLoja) {
+        let result = await prisma.mensagem.findMany({
             orderBy: { timestamp: "desc" },
             where: {
                 OR: [
@@ -54,17 +53,17 @@ export async function findMessagesLoja(codigoloja: number, conversa: string, pag
             },
             take: limit,
             skip: offset
-        })}
-    )
-    let mensagens: any[] = (await Promise.all(queries)).flat()
-    mensagens = mensagens.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-
-    mensagens = await Promise.all(mensagens.map(async (mensagem) => ({
-        ...mensagem,
-        fromMe: await getMessageFromMe(mensagem.id)
-    })))
-
-    return mensagens
+        })
+        result = await Promise.all(result.map(async (mensagem) => ({
+            ...mensagem,
+            de: numero.alias ? numero.alias : mensagem.de,
+            para: numero.alias ? numero.alias : mensagem.de,
+            fromMe: await getMessageFromMe(mensagem.id)
+        })))
+        messagesReturn.push(result)
+    }
+    messagesReturn = messagesReturn.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    return messagesReturn
 }
 
 async function getMessageFromMe(messageid: number): Promise<boolean> {
