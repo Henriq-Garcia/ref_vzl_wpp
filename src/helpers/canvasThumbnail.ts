@@ -39,12 +39,8 @@ export async function thumbnailBase64(fileBase64: string, type: string, mimeType
                     .format("image2")
                     .pipe()
                     .on("start", (commandLine) => {
-                        console.log(`Comando ffmpeg: ${commandLine}`)
                     })
                     .on("error", (err, stdout, stderr) => {
-                        console.error('Erro no ffmpeg:', err);
-                        console.error('stdout:', stdout);
-                        console.error('stderr:', stderr);
                         reject(err);
                     })
                     .on("data", (chunk) => imageBuffer.push(chunk))
@@ -66,7 +62,6 @@ export async function thumbnailBase64(fileBase64: string, type: string, mimeType
                         }
                     })
                     .on("error", (error) => {
-                        console.error("Erro no ffmpeg:", error);
                         reject(new Error("Erro ao processar o vídeo com ffmpeg."));
                     });
             });

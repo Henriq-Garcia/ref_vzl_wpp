@@ -54,18 +54,17 @@ export async function findMessagesLoja(codigoloja: number, conversa: string, pag
             take: limit,
             skip: offset
         })
-        console.log(result)
-        result = await Promise.all(result.map(async (mensagem) => ({
-            ...mensagem,
-            de: numero.alias ? numero.alias : mensagem.de,
-            para: numero.alias ? numero.alias : mensagem.de,
-            fromMe: await getMessageFromMe(mensagem.id)
-        })))
-        console.log(result)
-        messagesReturn.concat(result)
+        result = await Promise.all(result.map(async (mensagem) => {
+            const fromMe = await getMessageFromMe(mensagem.id)
+            return {
+                ...mensagem,
+                de: numero.alias && fromMe ? numero.alias : mensagem.de,
+                fromMe
+            }
+        }))
+        messagesReturn.push(...result)
     }
-    // messagesReturn = messagesReturn.flat()
-    messagesReturn = messagesReturn.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    messagesReturn.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
     return messagesReturn
 }
 

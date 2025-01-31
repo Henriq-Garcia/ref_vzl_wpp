@@ -10,6 +10,7 @@ import { createMensagem, deleteMessage, updateMessageContent } from "../prisma/m
 import { getMessageContent } from "../helpers/getMessageContent";
 import { generateMd5Hash } from "../helpers/generateMd5Hash";
 import { removeChavesDeAutenticacaoDaInstancia } from "../prisma/chaveDeAutenticacao.worker";
+import { createMensagemCrua } from "../prisma/mensagemCrua.worker";
 
 export class BaileysConnector {
     private baileysConfiguration: any = {
@@ -88,11 +89,10 @@ export class BaileysConnector {
 
         if (qr) {
             const url = await toDataURL(qr);
-            console.log("QR Code gerado:", url);
             await updateInstancia(this.instancia.id, { qrcode: url });
         }
     } catch (error) {
-        console.error("Erro ao atualizar conexão:", error);
+        
     }
 }
 
@@ -113,9 +113,15 @@ export class BaileysConnector {
                 
                 const msg = await createMensagem(baseMensagem);
                 if (!msg) continue;
+                let messageContent;
                 
-                const messageContent = await getMessageContent(message, msg.id);
-                if (!messageContent) {
+                try{
+                    messageContent = await getMessageContent(message, msg.id);
+                    if (!messageContent) {
+                        await deleteMessage(msg.id);
+                        continue;
+                    }
+                } catch(error) {
                     await deleteMessage(msg.id);
                     continue;
                 }
@@ -124,11 +130,11 @@ export class BaileysConnector {
                 await updateMessageContent(msg.id, { ...messageContent, hash: msgHash });
                 
                 const dataRaw = {
-                    mensagemId: msg.id,
+                    mensagemid: msg.id,
                     conteudo: message,
                     hash: generateMd5Hash(JSON.stringify(message))
                 };
-                
+                await createMensagemCrua(dataRaw)
             } catch (error) {
                 continue
             }

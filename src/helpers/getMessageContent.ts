@@ -34,8 +34,6 @@ export async function getMessageContent(message: WAMessage, messageId: number): 
             };
         }
     } catch (error) {
-        console.error("invalid message")
-        console.error(error)
         return null;
     }
 }

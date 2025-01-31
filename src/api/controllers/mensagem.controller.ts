@@ -14,10 +14,7 @@ export async function getMessagesController(req: Request, res: Response): Promis
         })
     }
     try {
-        console.log("buscando mensagens")
         const messages = await findMessagesLoja(codigoloja, numero, pagina ? pagina : 1)
-        console.log("busca concluida")
-        console.log(messages)
         if (messages.length == 0) {
             return res.status(204).send()
         }

@@ -12,7 +12,6 @@ async function authenticateCobCo() {
         const response = await axios.post(`https://${cobcoUrl}:10740/api/dados-usuario`, payload);
         global.cobcoToken = response.data.token;
     } catch (error) {
-        console.error("Erro ao autenticar:", error);
     }
 }
 
