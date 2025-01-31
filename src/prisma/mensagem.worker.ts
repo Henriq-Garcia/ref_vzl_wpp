@@ -58,8 +58,8 @@ export async function findMessagesLoja(codigoloja: number, conversa: string, pag
             const fromMe = await getMessageFromMe(mensagem.id)
             return {
                 ...mensagem,
-                de: numero.alias && fromMe ? numero.alias : mensagem.de,
-                fromMe
+                fromMe,
+                aliasde: numero.alias && fromMe ? numero.alias : undefined
             }
         }))
         messagesReturn.push(...result)
