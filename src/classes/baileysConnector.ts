@@ -100,7 +100,7 @@ export class BaileysConnector {
     async onMessagesUpsert(data: { messages: WAMessage[] }) {
         if (!this.socket?.user?.id || !this.alias) throw new Error("Usuário não autenticado");
         
-        const socketNum = this.alias ? this.alias : this.socket.user.id.split("@")[0]?.split(":")[0];
+        const socketNum = this.socket.user.id.split("@")[0]?.split(":")[0];
         
         for (const message of data.messages) {
             try {
