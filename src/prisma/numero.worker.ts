@@ -4,6 +4,7 @@ export async function createNumero(data: { codigoloja: number; numero: string; a
     try {
         return await prisma.numero.create({ data });
     } catch (error) {
+        console.log("Erro ao criar um numero", error)
         return null;
     }
 }

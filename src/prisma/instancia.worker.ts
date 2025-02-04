@@ -4,6 +4,7 @@ export async function createInstancia(data: { codigoloja: number, conectado: boo
     try {
         return prisma.instancia.create({ data });
     } catch (error) {
+        console.log("Erro ao criar uma instancia", error)
         return null;
     }
 }
