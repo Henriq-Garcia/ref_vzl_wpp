@@ -6,7 +6,7 @@ const sendResponse = (res: Response, status: number, error: boolean, message: st
     return res.status(status).send(response);
 };
 
-export async function getMessagesController(req: Request, res: Response) {
+export async function getMessagesController(req: Request, res: Response): Promise<any> {
     try {
         const pagina = Number(req.query.pagina) || 1;
         const codigoloja = Number(req.query.codigoloja);

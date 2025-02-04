@@ -9,7 +9,7 @@ const sendResponse = (res: Response, status: number, error: boolean, message: st
     return res.status(status).send(response);
 };
 
-export async function createInstanciaController(req: Request, res: Response) {
+export async function createInstanciaController(req: Request, res: Response): Promise<any> {
     try {
         const { numero, codigoloja, alias } = req.body;
         if (!numero || !codigoloja) {
@@ -29,7 +29,7 @@ export async function createInstanciaController(req: Request, res: Response) {
     }
 }
 
-export async function getInstanciaQRCodeController(req: Request, res: Response) {
+export async function getInstanciaQRCodeController(req: Request, res: Response): Promise<any> {
     try {
         const { numero } = req.query;
         if (!numero) {
@@ -57,7 +57,7 @@ export async function getInstanciaQRCodeController(req: Request, res: Response) 
     }
 }
 
-export async function getLojasNumeroController(req: Request, res: Response) {
+export async function getLojasNumeroController(req: Request, res: Response): Promise<any> {
     try {
         let { codigoloja }: any = req.query;
         if (!codigoloja) {
@@ -81,7 +81,7 @@ export async function getLojasNumeroController(req: Request, res: Response) {
     }
 }
 
-export async function setNumeroAliasController(req: Request, res: Response) {
+export async function setNumeroAliasController(req: Request, res: Response): Promise<any> {
     try {
         const { numero, alias } = req.body;
         if (!numero || !alias) {

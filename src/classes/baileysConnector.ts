@@ -114,49 +114,32 @@ export class BaileysConnector {
 
         const socketNum = this.socket.user.id.split("@")[0]?.split(":")[0];
 
-        for (const message of data.messages) {
+        await Promise.all(data.messages.map(async (message) => {
             try {
                 const remoteJid = message.key.remoteJid?.split("@")[0];
-
                 const baseMensagem: any = {
                     de: message.key.fromMe ? socketNum : remoteJid,
                     para: !message.key.fromMe ? socketNum : remoteJid,
                     data: new Date((message.messageTimestamp as number) * 1000)
                 };
-
+    
                 const msg = await createMensagem(baseMensagem);
-                if (!msg) {
-                    console.warn(`Falha ao criar mensagem para ${this.numero}`);
-                    continue;
-                }
-
-                let messageContent;
-                try {
-                    messageContent = await getMessageContent(message, msg.id);
-                    if (!messageContent) {
-                        console.warn(`Conteúdo da mensagem ausente, removendo mensagem ID ${msg.id}`);
-                        await deleteMessage(msg.id);
-                        continue;
-                    }
-                } catch (error) {
-                    console.warn(`Erro ao obter conteúdo da mensagem, removendo mensagem ID ${msg.id}`);
+                if (!msg) return;
+    
+                const messageContent = await getMessageContent(message, msg.id);
+                if (!messageContent) {
                     await deleteMessage(msg.id);
-                    continue;
+                    return;
                 }
-
+    
                 const msgHash = generateMd5Hash(JSON.stringify({ ...baseMensagem, ...messageContent }));
                 await updateMessageContent(msg.id, { ...messageContent, hash: msgHash });
-
-                const dataRaw = {
-                    mensagemid: msg.id,
-                    conteudo: message,
-                    hash: generateMd5Hash(JSON.stringify(message))
-                };
-
-                await createMensagemCrua(dataRaw);
+    
+                await createMensagemCrua({ mensagemid: msg.id, conteudo: message, hash: generateMd5Hash(JSON.stringify(message)) });
+    
             } catch (error) {
                 console.error(`Erro ao processar mensagem para ${this.numero}:`, error);
             }
-        }
+        }));
     }
 }
