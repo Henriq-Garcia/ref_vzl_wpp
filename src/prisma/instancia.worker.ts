@@ -34,6 +34,12 @@ export async function findInstanciaByNumeroId(numeroid: number) {
 export async function findManyInstancias(filter?: Partial<instancia>) {
     return await prisma.instancia.findMany({
         where: filter,
-        omit: { qrcode: true}
+        omit: { qrcode: true }
     });
 };
+
+export async function deleteInstancia(id: number) {
+    return await prisma.instancia.delete({
+        where: { id }
+    })
+}

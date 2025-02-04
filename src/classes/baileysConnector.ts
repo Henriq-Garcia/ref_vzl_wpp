@@ -60,45 +60,40 @@ export class BaileysConnector {
     }
 
     async onConnectionUpdate(data: Partial<ConnectionState>) {
-    if (!this.instancia) throw new Error("Instância não iniciada");
+        if (!this.instancia) throw new Error("Instância não iniciada");
 
-    try {
-        const { qr, lastDisconnect, connection } = data;
+        try {
+            const { qr, lastDisconnect, connection } = data;
 
-        if (connection === "close" && lastDisconnect?.error) {
-            const statusCode = (lastDisconnect.error as Boom)?.output?.statusCode;
-            
-            if (statusCode === 401) {
-                await this.socket?.ws.close();
-                await updateInstancia(this.instancia.id, { conectado: false });
-                await removeChavesDeAutenticacaoDaInstancia(this.numero)
+            if (connection === "close" && lastDisconnect?.error) {
+                const statusCode = (lastDisconnect.error as Boom)?.output?.statusCode;
                 
-            }
-            if (statusCode === 408) {
-                await updateInstancia(this.instancia.id, { conectado: false });
-                await removeChavesDeAutenticacaoDaInstancia(this.numero)
-            }
-            await this.init(false);
-        }
+                if (statusCode === 401 || statusCode === 428 || statusCode === 408) {
+                    await this.socket?.ws.close();
+                    await updateInstancia(this.instancia.id, { conectado: false });
+                    await removeChavesDeAutenticacaoDaInstancia(this.numero)
+                }
 
-        if (connection === "open") {
-            await updateInstancia(this.instancia.id, { conectado: true });
-
-            const userId = this.socket?.user?.id;
-            if (userId && !userId.includes(this.numero)) {
-                await this.socket.logout();
+                await this.init(false);
             }
-        }
 
-        if (qr) {
-            const url = await toDataURL(qr);
-            await updateInstancia(this.instancia.id, { qrcode: url });
+            if (connection === "open") {
+                await updateInstancia(this.instancia.id, { conectado: true });
+
+                const userId = this.socket?.user?.id;
+                if (userId && !userId.includes(this.numero)) {
+                    await this.socket.logout();
+                }
+            }
+
+            if (qr) {
+                const url = await toDataURL(qr);
+                await updateInstancia(this.instancia.id, { qrcode: url });
+            }
+        } catch (error) {
+            
         }
-    } catch (error) {
-        
     }
-}
-
 
     async onMessagesUpsert(data: { messages: WAMessage[] }) {
         if (!this.socket?.user?.id || !this.alias) return this.init(false);

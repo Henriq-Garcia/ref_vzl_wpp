@@ -1,4 +1,4 @@
-import { findManyInstancias } from "../prisma/instancia.worker";
+import { deleteInstancia, findManyInstancias } from "../prisma/instancia.worker";
 import { findNumeroById } from "../prisma/numero.worker";
 import { BaileysConnector } from "./baileysConnector";
 
@@ -7,7 +7,12 @@ export class BaileysRestorer {
         const instancias = await findManyInstancias()
         for (const instancia of instancias) {
             const numero = await findNumeroById(instancia.numeroid)
-            new BaileysConnector(numero.numero).init(false)
+            if (instancia.conectado == false) {
+                await deleteInstancia(instancia.id)
+                new BaileysConnector(numero.numero).init(true)
+            } else {
+                new BaileysConnector(numero.numero).init(false)
+            } 
         }
     }
 }

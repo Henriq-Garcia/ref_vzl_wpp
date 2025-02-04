@@ -64,7 +64,6 @@ export async function findMessagesLoja(codigoloja: number, conversa: string, pag
         }))
         messagesReturn.push(...result)
     }
-    messagesReturn.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
     return messagesReturn
 }
 
