@@ -1,4 +1,4 @@
-import { findInstanciaByNumeroId } from "./instancia.worker";
+import { findInstancia } from "./instancia.worker";
 
 export async function createNumero(data: { codigoloja: number; numero: string; alias?: string }) {
     try {
@@ -38,7 +38,7 @@ export async function findNumerosDaLoja(codigoloja: number) {
         const instancias = await Promise.all(
             numeros.map(async (numero) => ({
                 ...numero,
-                instanciaconectada: (await findInstanciaByNumeroId(numero.id))?.conectado ?? false
+                instanciaconectada: (await findInstancia({numeroid: numero.id}))?.conectado ?? false
             }))
         );
         return instancias;
