@@ -4,7 +4,7 @@ export async function createInstancia(data: { codigoloja: number, conectado: boo
     try {
         return prisma.instancia.create({ data });
     } catch (error) {
-        return undefined;
+        return null;
     }
 }
 
@@ -17,7 +17,7 @@ export async function updateInstancia(where: { id: number }, data: { conectado?:
             data
         });
     } catch (error) {
-        return undefined;
+        return null;
     }
 }
 
@@ -29,7 +29,7 @@ export async function findInstancia(where: { id?: number, numeroid: number}) {
             where: uniqueWhere
         });
     } catch (error) {
-        return undefined;
+        return null;
     }
 }
 
@@ -40,7 +40,7 @@ export async function findManyInstancias(filter?: Partial<instancia>) {
             omit: { qrcode: true }
         });
     } catch (error){
-        return undefined
+        return null
     }
     
 };
@@ -51,6 +51,6 @@ export async function deleteInstancia(id: number) {
             where: { id }
         })
     }catch (error) {
-        return undefined
+        return null
     }
 }
