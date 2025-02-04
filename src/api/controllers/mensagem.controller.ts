@@ -1,32 +1,29 @@
 import { Request, Response } from "express";
 import { findMessagesLoja } from "../../prisma/mensagem.worker";
 
-// TODO: getMessagesController() => input: pagina, codigoloja, numero/conversa; output: mensagens da conversa
-export async function getMessagesController(req: Request, res: Response): Promise<any> {
-    let pagina = Number(req.query.pagina)
-    let codigoloja = Number(req.query.codigoloja)
-    let numero = String(req.query.numero)
+const sendResponse = (res: Response, status: number, error: boolean, message: string, data: any = null) => {
+    const response = { error, message, ...(data && { data }) };
+    return res.status(status).send(response);
+};
 
-    if (!codigoloja || !numero) {
-        return res.status(400).send({
-            error: true,
-            message: "Parametros invalidos"
-        })
-    }
+export async function getMessagesController(req: Request, res: Response) {
     try {
-        const messages = await findMessagesLoja(codigoloja, numero, pagina ? pagina : 1)
-        if (messages.length == 0) {
-            return res.status(204).send()
+        const pagina = Number(req.query.pagina) || 1;
+        const codigoloja = Number(req.query.codigoloja);
+        const numero = String(req.query.numero).trim();
+
+        if (isNaN(codigoloja) || !numero) {
+            return sendResponse(res, 400, true, "Parâmetros inválidos. Verifique codigoloja e número.");
         }
-        return res.status(200).send({
-            error: false,
-            messages
-        })
+
+        const messages = await findMessagesLoja(codigoloja, numero, pagina);
+        if (!messages || messages.length === 0) {
+            return res.status(204).send();
+        }
+
+        return sendResponse(res, 200, false, "Mensagens encontradas", { messages });
+
     } catch (error) {
-        return res.status(500).send({
-            error: true,
-            message: "Erro no servidor ao buscar mensagens"
-        })
+        return sendResponse(res, 500, true, "Erro no servidor ao buscar mensagens");
     }
-    
 }

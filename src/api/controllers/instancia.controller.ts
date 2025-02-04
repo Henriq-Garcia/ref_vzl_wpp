@@ -1,118 +1,97 @@
 import { Request, Response } from "express";
 import { createNumero, findNumerosDaLoja, findNumero, updateNumero } from "../../prisma/numero.worker";
 import { BaileysConnector } from "../../classes/baileysConnector";
-import { findInstancia,  } from "../../prisma/instancia.worker";
+import { findInstancia } from "../../prisma/instancia.worker";
 
-export async function createInstanciaController(req: Request, res: Response): Promise<any> {
-    const { numero, codigoloja, alias } = req.body
-    if (!numero || !codigoloja) {
-        return res.status(400).send({
-            error: true,
-            message: "Parametros invalidos"
-        })
-    }
+
+const sendResponse = (res: Response, status: number, error: boolean, message: string, data: any = null) => {
+    const response = { error, message, ...(data && { data }) };
+    return res.status(status).send(response);
+};
+
+export async function createInstanciaController(req: Request, res: Response) {
     try {
-        const numExists = await findNumero(numero)
-        if (numExists !== null) {
-            new BaileysConnector(numExists.numero).init(true)
-        } else {
-            const num = await createNumero({codigoloja, numero, alias})
-            new BaileysConnector(num.numero).init(true)
+        const { numero, codigoloja, alias } = req.body;
+        if (!numero || !codigoloja) {
+            return sendResponse(res, 400, true, "Parâmetros inválidos");
         }
-        return res.status(201).send({
-            error: false,
-            message: "Instacia iniciada"
-        })
+
+        let num = await findNumero({ numero });
+        if (!num) {
+            num = await createNumero({ codigoloja, numero, alias });
+        }
+
+        new BaileysConnector(num.numero).init(true);
+        return sendResponse(res, 201, false, "Instância iniciada");
+
     } catch (error) {
-        return res.status(500).send({
-            error: true,
-            message: "Erro no servidor durante criação da Instancia"
-        })
+        return sendResponse(res, 500, true, "Erro no servidor ao criar a instância");
     }
 }
 
-// TODO: getInstanciaQRCodeController() => input:numero; output: QrCode // DONE
-export async function getInstanciaQRCodeController(req: Request, res: Response): Promise<any> {
-    let { numero } = req.query;
-    if (!numero) {
-        return res.status(400).send({
-            error: true,
-            message: "Informe um numero"
-        })
-    }
+export async function getInstanciaQRCodeController(req: Request, res: Response) {
     try {
-        const num = await findNumero({ numero: String(numero) })
-        let instancia = await findInstancia({ numeroid: num.id })
+        const { numero } = req.query;
+        if (!numero) {
+            return sendResponse(res, 400, true, "Informe um número");
+        }
+
+        const num = await findNumero({ numero: String(numero) });
+        if (!num) {
+            return sendResponse(res, 404, true, "Número não encontrado");
+        }
+
+        let instancia = await findInstancia({ numeroid: num.id });
+        if (!instancia) {
+            return sendResponse(res, 404, true, "Instância não encontrada");
+        }
+
         while (!instancia.qrcode) {
-            instancia = await findInstancia({ numeroid: num.id })
+            instancia = await findInstancia({ numeroid: num.id });
         }
-        return res.status(200).send({
-            error: false,
-            message: "QrCode encontrado",
-            qrcode: instancia.qrcode
-        })
+
+        return sendResponse(res, 200, false, "QR Code encontrado", { qrcode: instancia.qrcode });
+
     } catch (error) {
-        res.status(500).send({
-            error: true,
-            message: "Erro no servidor durante a busca do QrCode"
-        })
+        return sendResponse(res, 500, true, "Erro no servidor ao buscar o QR Code");
     }
 }
 
-// TODO: getLojasNumeroController() => input: codigoloja; output: todos os numeros da loja e o status de suas instancias // DONE
-export async function getLojasNumeroController(req: Request, res: Response): Promise<any> {
-    let { codigoloja }: any = req.query;
-    if (!codigoloja) {
-        return res.status(400).send({
-            error: true,
-            message: "Informe um codigo de loja"
-        })
-    }
-    codigoloja = Number(codigoloja)
-    if (!(typeof codigoloja === "number")) {
-        return res.status(400).send({
-            error: true,
-            message: "O codigo da loja deve ser um numero"
-        })
-    }
+export async function getLojasNumeroController(req: Request, res: Response) {
     try {
-        const numeros = await findNumerosDaLoja(codigoloja)
-        if (numeros.length === 0) {
-            return res.status(204).send()
+        let { codigoloja }: any = req.query;
+        if (!codigoloja) {
+            return sendResponse(res, 400, true, "Informe um código de loja");
         }
-        return res.status(200).send({
-            error: false,
-            message: "Numeros encontrados",
-            numeros
-        })
-    } catch (error) {
-        res.status(500).send({
-            error: true,
-            message: "Erro no servidor durante a busca dos numeros"
-        })
-    }
 
+        codigoloja = Number(codigoloja);
+        if (isNaN(codigoloja)) {
+            return sendResponse(res, 400, true, "O código da loja deve ser um número válido");
+        }
+
+        const numeros = await findNumerosDaLoja(codigoloja);
+        if (!numeros || numeros.length === 0) {
+            return res.status(204).send(); // No Content
+        }
+
+        return sendResponse(res, 200, false, "Números encontrados", { numeros });
+
+    } catch (error) {
+        return sendResponse(res, 500, true, "Erro no servidor ao buscar os números");
+    }
 }
 
-// TODO: setNumeroAliasController() => input: numero, alias; // DONE
-export async function setNumeroAliasController(req: Request, res: Response): Promise<any> {
-    let { numero, alias }: any = req.body
-    if (!numero && alias) {
-        return res.status(400).send({
-            error: true,
-            message: "Parametros invalidos"
-        })
-    }
+export async function setNumeroAliasController(req: Request, res: Response) {
     try {
-        await updateNumero(numero, alias)
-        return res.status(200).send({
-            error: false,
-            message: "Alias criado"
-        })
+        const { numero, alias } = req.body;
+        if (!numero || !alias) {
+            return sendResponse(res, 400, true, "Parâmetros inválidos");
+        }
+
+        await updateNumero({ numero }, { alias });
+        return sendResponse(res, 200, false, "Alias atualizado com sucesso");
+
     } catch (error) {
-        return res.status(500).send({
-            error: true,
-            message: "Erro no servidor durante a criação do alias"
-        })
+        return sendResponse(res, 500, true, "Erro no servidor ao atualizar o alias");
     }
 }
