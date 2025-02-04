@@ -77,8 +77,8 @@ export class BaileysConnector {
 
                 if ([401, 428, 408].includes(statusCode)) {
                     console.warn(`Conexão encerrada para ${this.numero} - Código ${statusCode}`);
-                    await this.socket?.ws.close();
                     await updateInstancia({ id: this.instancia.id }, { conectado: false });
+                    await this.socket?.ws.close();
                     await removeChavesDeAutenticacaoDaInstancia(this.numero);
                 }
 

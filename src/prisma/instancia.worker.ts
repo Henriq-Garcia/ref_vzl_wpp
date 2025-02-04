@@ -40,7 +40,7 @@ export async function findManyInstancias(filter?: Partial<instancia>) {
             omit: { qrcode: true }
         });
     } catch (error){
-        return null
+        return []
     }
     
 };
