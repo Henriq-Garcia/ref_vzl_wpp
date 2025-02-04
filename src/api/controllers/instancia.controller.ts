@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { createNumero, findLojaNumeros, findNumero, updateNumero } from "../../prisma/numero.worker";
+import { createNumero, findNumerosDaLoja, findNumero, updateNumero } from "../../prisma/numero.worker";
 import { BaileysConnector } from "../../classes/baileysConnector";
-import { findInstancia, findInstanciaByNumeroId } from "../../prisma/instancia.worker";
+import { findInstancia,  } from "../../prisma/instancia.worker";
 
 export async function createInstanciaController(req: Request, res: Response): Promise<any> {
     const { numero, codigoloja, alias } = req.body
@@ -41,10 +41,10 @@ export async function getInstanciaQRCodeController(req: Request, res: Response):
         })
     }
     try {
-        const num = await findNumero(String(numero))
-        let instancia = await findInstanciaByNumeroId(num.id)
+        const num = await findNumero({ numero: String(numero) })
+        let instancia = await findInstancia({ numeroid: num.id })
         while (!instancia.qrcode) {
-            instancia = await findInstanciaByNumeroId(num.id)
+            instancia = await findInstancia({ numeroid: num.id })
         }
         return res.status(200).send({
             error: false,
@@ -76,7 +76,7 @@ export async function getLojasNumeroController(req: Request, res: Response): Pro
         })
     }
     try {
-        const numeros = await findLojaNumeros(codigoloja)
+        const numeros = await findNumerosDaLoja(codigoloja)
         if (numeros.length === 0) {
             return res.status(204).send()
         }
